@@ -4,6 +4,9 @@ using System.Text.Json;
 
 namespace Altairis.Pushover.Client;
 
+/// <summary>
+/// This class is main entry point of this library and encapsulates the API calls.
+/// </summary>
 public class PushoverClient {
     private const string API_ADDRESS = "https://api.pushover.net/1/";
 
@@ -11,6 +14,10 @@ public class PushoverClient {
     private readonly HttpClient httpClient;
     private readonly JsonSerializerOptions jsonSerializerOptions;
 
+    /// <summary>
+    /// Initializes a new instance of the <see cref="PushoverClient"/> class.
+    /// </summary>
+    /// <param name="token">The application token.</param>
     public PushoverClient(string token) {
         this.token = token;
 
@@ -29,17 +36,43 @@ public class PushoverClient {
 
     // General
 
+    /// <summary>
+    /// Gets current state of the API limits.
+    /// </summary>
+    /// <param name="cancellationToken">The cancellation token.</param>
+    /// <returns></returns>
     public Task<PushoverLimitsResponse> GetLimits(CancellationToken cancellationToken = default)
         => this.PerformGetRequest<PushoverLimitsResponse>($"apps/limits.json?token={this.token}", cancellationToken);
 
+    /// <summary>
+    /// Gets the available notification sounds.
+    /// </summary>
+    /// <param name="cancellationToken">The cancellation token.</param>
+    /// <returns></returns>
     public Task<PushoverSoundsResponse> GetSounds(CancellationToken cancellationToken = default)
         => this.PerformGetRequest<PushoverSoundsResponse>($"sounds.json?token={this.token}", cancellationToken);
 
+    /// <summary>
+    /// Validates if the user or group id belongs to existing user.
+    /// </summary>
+    /// <param name="userOrGroup">The user or group id to validate.</param>
+    /// <param name="device">The device name to validate.</param>
+    /// <param name="cancellationToken">The cancellation token.</param>
+    /// <returns></returns>
     public Task<PushoverValidateResponse> ValidateUserOrGroup(string userOrGroup, string? device = null, CancellationToken cancellationToken = default)
         => this.PerformPostRequest<PushoverValidateResponse>($"users/validate.json?token={this.token}", new { user = userOrGroup, device }, cancellationToken);
 
     // Messaging
 
+    /// <summary>
+    /// Sends the notification message.
+    /// </summary>
+    /// <param name="message">The message.</param>
+    /// <param name="attachmentFileName">Name of the attachment file.</param>
+    /// <param name="attachmentStream">The attachment stream. If set to <c>null</c> and the <c>attachmentFileName</c> is specified, the file will be used.</param>
+    /// <param name="cancellationToken">The cancellation token.</param>
+    /// <returns></returns>
+    /// <exception cref="System.Exception">Error deserializing API response.</exception>
     public async Task<PushoverMessageResponse> SendMessage(PushoverMessage message, string? attachmentFileName = null, Stream? attachmentStream = null, CancellationToken cancellationToken = default) {
         // Prepare form fields
         var form = new Dictionary<string, string> {
@@ -92,32 +125,93 @@ public class PushoverClient {
         return result ?? throw new Exception("Error deserializing API response.");
     }
 
+    /// <summary>
+    /// Gets the receipt for message sent with Emergency priority.
+    /// </summary>
+    /// <param name="receipt">The receipt id.</param>
+    /// <param name="cancellationToken">The cancellation token.</param>
+    /// <returns></returns>
     public Task<PushoverReceiptResponse> GetMessageReceipt(string receipt, CancellationToken cancellationToken = default)
         => this.PerformGetRequest<PushoverReceiptResponse>($"receipts/{receipt}.json?token={this.token}", cancellationToken);
 
+    /// <summary>
+    /// Cancels the message sent with Emergency priority, based on receipt id.
+    /// </summary>
+    /// <param name="receipt">The receipt id.</param>
+    /// <param name="cancellationToken">The cancellation token.</param>
+    /// <returns></returns>
     public Task<PushoverResponse> CancelMessageByReceipt(string receipt, CancellationToken cancellationToken = default)
         => this.PerformPostRequest<PushoverResponse>($"receipts/{receipt}/cancel.json?token={this.token}", cancellationToken);
 
+    /// <summary>
+    /// Cancels the message sent with Emergency priority, based on tag.
+    /// </summary>
+    /// <param name="tag">The tag value.</param>
+    /// <param name="cancellationToken">The cancellation token.</param>
+    /// <returns></returns>
     public Task<PushoverResponse> CancelMessageByTag(string tag, CancellationToken cancellationToken = default)
     => this.PerformPostRequest<PushoverResponse>($"receipts/cancel_by_tag/{tag}.json?token={this.token}", cancellationToken);
 
     // Groups
 
+    /// <summary>
+    /// Gets the group information.
+    /// </summary>
+    /// <param name="group">The group id.</param>
+    /// <param name="cancellationToken">The cancellation token.</param>
+    /// <returns></returns>
     public Task<PushoverGroupResponse> GetGroup(string group, CancellationToken cancellationToken = default)
         => this.PerformGetRequest<PushoverGroupResponse>($"groups/{group}.json?token={this.token}", cancellationToken);
 
+    /// <summary>
+    /// Renames the group.
+    /// </summary>
+    /// <param name="group">The group id.</param>
+    /// <param name="newName">The new name.</param>
+    /// <param name="cancellationToken">The cancellation token.</param>
+    /// <returns></returns>
     public Task<PushoverResponse> RenameGroup(string group, string newName, CancellationToken cancellationToken = default)
         => this.PerformPostRequest<PushoverResponse>($"groups/{group}/rename.json?token={this.token}", new { name = newName }, cancellationToken);
 
+    /// <summary>
+    /// Adds the user to a group.
+    /// </summary>
+    /// <param name="group">The group id.</param>
+    /// <param name="user">The user id.</param>
+    /// <param name="device">The device name.</param>
+    /// <param name="memo">The memo added to membership.</param>
+    /// <param name="cancellationToken">The cancellation token.</param>
+    /// <returns></returns>
     public Task<PushoverResponse> AddUserToGroup(string group, string user, string? device = null, string? memo = null, CancellationToken cancellationToken = default)
         => this.PerformPostRequest<PushoverResponse>($"groups/{group}/add_user.json?token={this.token}", new { user, device, memo }, cancellationToken);
 
+    /// <summary>
+    /// Deletes the user from group.
+    /// </summary>
+    /// <param name="group">The group id.</param>
+    /// <param name="user">The user id.</param>
+    /// <param name="cancellationToken">The cancellation token.</param>
+    /// <returns></returns>
     public Task<PushoverResponse> DeleteUserFromGroup(string group, string user, CancellationToken cancellationToken = default)
         => this.PerformPostRequest<PushoverResponse>($"groups/{group}/delete_user.json?token={this.token}", new { user }, cancellationToken);
 
+    /// <summary>
+    /// Disables the user in group.
+    /// </summary>
+    /// <param name="group">The group id.</param>
+    /// <param name="user">The user id.</param>
+    /// <param name="cancellationToken">The cancellation token.</param>
+    /// <returns></returns>
     public Task<PushoverResponse> DisableUserInGroup(string group, string user, CancellationToken cancellationToken = default)
         => this.PerformPostRequest<PushoverResponse>($"groups/{group}/disable_user.json?token={this.token}", new { user }, cancellationToken);
 
+    /// <summary>
+    /// Enables the user in group.
+    /// </summary>
+    /// <param name="group">The group id.</param>
+    /// <param name="user">The user id.</param>
+    /// <param name="cancellationToken">The cancellation token.</param>
+    /// <returns></returns>
     public Task<PushoverResponse> EnableUserInGroup(string group, string user, CancellationToken cancellationToken = default)
         => this.PerformPostRequest<PushoverResponse>($"groups/{group}/enable_user.json?token={this.token}", new { user }, cancellationToken);
 
