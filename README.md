@@ -10,21 +10,31 @@ So, I wrote one, with fairly modern approach.
 
 ## Getting started
 
+First, install the NuGet package `Altairis.Pushover.Client`:
+
+```
+Install-Package Altairis.Pushover.Client
+```
+
+Then create instance of the `PushoverClient` class:
+
 ```csharp
-// API token obtained from app registration
-var myApiToken = "axxxxxxxxxxxxxxxxxxxxxxxxxxxxx";
+// Create client class with API token obtained from app registration
+var client = new PushoverClient("axxxxxxxxxxxxxxxxxxxxxxxxxxxxx");
+```
 
-// User ID obtained from recipient user registration
-var myUserId = "uxxxxxxxxxxxxxxxxxxxxxxxxxxxxx";
+Then prepare the message using `PushoverMessage`. Recipient user ID and message text are required, various other options can be set as properties:
 
-// Create client class
-var client = new PushoverClient(myApiToken);
-
-// Create a message
-var message = new PushoverMessage(myUserId, "This is a test message") {
+```csharp
+// Create a message with user ID obtained from recipient user registration
+var message = new PushoverMessage("uxxxxxxxxxxxxxxxxxxxxxxxxxxxxx", "This is a test message") {
     Title = "Test message"
 };
+```
 
+Then send message (asynchronously) and check if the call was successfull:
+
+```csharp
 // Send message
 var result = await client.SendMessage(message);
 
